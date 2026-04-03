@@ -25,6 +25,24 @@ import tiktok_agent as agent
 # ── Page config ────────────────────────────────────────────────────────────────
 st.set_page_config(page_title="ClinicalHours TikTok Agent", layout="wide")
 
+# ── Password gate ───────────────────────────────────────────────────────────────
+def check_password():
+    correct = st.secrets.get("APP_PASSWORD", "shivam123")
+    if st.session_state.get("authenticated"):
+        return True
+    with st.form("login"):
+        st.markdown("### ClinicalHours TikTok Agent")
+        pw = st.text_input("Password", type="password")
+        if st.form_submit_button("Enter"):
+            if pw == correct:
+                st.session_state["authenticated"] = True
+                st.rerun()
+            else:
+                st.error("Incorrect password")
+    st.stop()
+
+check_password()
+
 
 # ── Claude client ──────────────────────────────────────────────────────────────
 @st.cache_resource
