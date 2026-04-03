@@ -146,8 +146,9 @@ with st.sidebar:
             fw_key     = st.selectbox("Framework", list(agent.FRAMEWORKS),
                                       format_func=lambda k: agent.FRAMEWORKS[k]['name'])
             vis        = st.selectbox("Visual style", list(agent.VISUAL_STYLES))
-            platform   = st.radio("Platform", ['tiktok', 'instagram'],
-                                  format_func=lambda p: 'TikTok (9:16)' if p == 'tiktok' else 'Instagram (4:3)',
+            _labels = {'tiktok': 'TikTok (9:16)', 'instagram': 'IG Landscape (4:3)', 'instagram_45': 'IG Portrait (4:5)'}
+            platform   = st.radio("Platform", list(_labels),
+                                  format_func=lambda p: _labels[p],
                                   horizontal=True)
             no_res     = st.checkbox("Skip research", value=False)
             skip_imgs  = st.checkbox("Copy only (no images)", value=False)

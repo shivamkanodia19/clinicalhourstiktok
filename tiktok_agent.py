@@ -937,6 +937,49 @@ LAYOUT_VARIANTS_INSTAGRAM: List[Dict[str, str]] = [
     },
 ]
 
+LAYOUT_VARIANTS_INSTAGRAM_45: List[Dict[str, str]] = [
+    {
+        'name': 'headline-top',
+        'modifier': (
+            'Headline and rule in the upper quarter of the canvas. '
+            'Visual element centered below with generous breathing room. '
+            'Subtext anchored near the bottom.'
+        ),
+    },
+    {
+        'name': 'headline-bottom',
+        'modifier': (
+            'Visual element fills the upper 60%. '
+            'Headline, rule, and subtext anchored to the lower third. '
+            'Text reads after visual impact.'
+        ),
+    },
+    {
+        'name': 'headline-mid',
+        'modifier': (
+            'Headline and rule centered vertically. '
+            'Equal breathing room above and below. '
+            'Balanced editorial composition.'
+        ),
+    },
+    {
+        'name': 'text-dominant',
+        'modifier': (
+            'Oversized headline fills 35% of canvas height — maximum typographic presence. '
+            'DM Sans at maximum weight. Visual element small and secondary. '
+            'Every word readable as a thumbnail.'
+        ),
+    },
+    {
+        'name': 'visual-dominant',
+        'modifier': (
+            'Visual element fills 55-65% of the frame. '
+            'Headline compact and sharp, top-left. '
+            'Minimal text, maximum product or object visibility.'
+        ),
+    },
+]
+
 # Keep LAYOUT_VARIANTS as alias (used by pick_layout_variant default)
 LAYOUT_VARIANTS = LAYOUT_VARIANTS_TIKTOK
 
@@ -1151,7 +1194,12 @@ def format_image_rejection_context(slide_role: str = '', limit: int = 4) -> str:
 def pick_layout_variant(platform: str = 'tiktok') -> str:
     """Return a random layout modifier string for the given platform."""
     import random
-    variants = LAYOUT_VARIANTS_INSTAGRAM if platform == 'instagram' else LAYOUT_VARIANTS_TIKTOK
+    if platform == 'instagram':
+        variants = LAYOUT_VARIANTS_INSTAGRAM
+    elif platform == 'instagram_45':
+        variants = LAYOUT_VARIANTS_INSTAGRAM_45
+    else:
+        variants = LAYOUT_VARIANTS_TIKTOK
     return ascii_safe(random.choice(variants)['modifier'])
 
 
@@ -1576,6 +1624,8 @@ def build_image_prompt(
 
     if platform == 'instagram':
         canvas_spec = 'Create a landscape Instagram post image, exactly 1080 pixels wide by 810 pixels tall (4:3 ratio).'
+    elif platform == 'instagram_45':
+        canvas_spec = 'Create a portrait Instagram post image, exactly 1080 pixels wide by 1350 pixels tall (4:5 ratio).'
     else:
         canvas_spec = 'Create a vertical TikTok slideshow image, exactly 1080 pixels wide by 1920 pixels tall (9:16 ratio).'
 
