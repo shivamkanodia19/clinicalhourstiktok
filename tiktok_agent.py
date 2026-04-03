@@ -853,43 +853,43 @@ SCREENSHOT_SUGGESTIONS: Dict[str, List[str]] = {
 # A new variant is randomly selected on each generation (and each retry), ensuring visual variety.
 LAYOUT_VARIANTS: List[Dict[str, str]] = [
     {
-        'name': 'headline-top',
+        'name': 'text-left',
         'modifier': (
-            'Headline and rule in the upper third of the canvas. '
-            'Device or open space occupies the lower two-thirds. '
-            'Generous breathing room between text and device.'
+            'Landscape split layout: headline and rule flush to the left third of the canvas, '
+            'vertically centered. Visual element (device or object) anchored to the right half. '
+            'Clean vertical breathing room on both sides.'
         ),
     },
     {
-        'name': 'headline-bottom',
+        'name': 'text-right',
         'modifier': (
-            'Device or open space in the upper two-thirds. '
-            'Headline, 1px rule, and subtext anchored to the lower third. '
+            'Landscape split layout: visual element (device or object) fills the left half. '
+            'Headline, rule, and subtext anchored to the right third, vertically centered. '
             'Text reads after the visual impact.'
         ),
     },
     {
-        'name': 'headline-mid',
+        'name': 'headline-center',
         'modifier': (
-            'Headline and rule centered vertically on the canvas. '
-            'Equal breathing room above and below. '
-            'Balanced, editorial composition.'
+            'Headline and rule centered horizontally and vertically on the canvas. '
+            'Visual element placed subtly in the background or lower-right corner. '
+            'Balanced, editorial composition with generous white space.'
         ),
     },
     {
         'name': 'text-dominant',
         'modifier': (
-            'Large headline fills 40% of canvas height - oversized, maximum presence. '
-            'DM Sans at maximum weight. Device is small and secondary if present. '
-            'Every word readable as a 6-inch thumbnail.'
+            'Oversized headline spans 60% of canvas width — maximum typographic presence. '
+            'DM Sans at maximum weight, left-aligned. Visual element is small and secondary. '
+            'Every word readable as a thumbnail.'
         ),
     },
     {
-        'name': 'device-dominant',
+        'name': 'visual-dominant',
         'modifier': (
-            'Device fills 55-65% of the frame - product is the visual anchor. '
-            'Headline is compact, above the device, small but sharp. '
-            'Minimal text, maximum product visibility.'
+            'Visual element (device or object) fills 60-70% of the frame as the primary anchor. '
+            'Headline is compact and sharp, top-left corner. '
+            'Minimal text, maximum product or object visibility.'
         ),
     },
 ]
@@ -1528,7 +1528,7 @@ def build_image_prompt(
     style_desc = ascii_safe(VISUAL_STYLES.get(visual_style, VISUAL_STYLES['mockup']))
 
     lines = [
-        'Create a vertical TikTok slideshow image, exactly 1080 pixels wide by 1920 pixels tall.',
+        'Create a landscape Instagram post image, exactly 1080 pixels wide by 810 pixels tall (4:3 ratio).',
         '',
         VISUAL_STYLE_GUIDE,
         '',
