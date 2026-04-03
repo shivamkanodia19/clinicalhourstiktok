@@ -364,23 +364,43 @@ elif st.session_state.phase == 'slide_image':
             sd_def = fw_def[sidx] if sidx < len(fw_def) else {}
             prev   = ''.join(f'  {d}\n' for d in st.session_state.previous_slide_visuals)
 
+            brand_ctx = (
+                'CLINICALHOURS BRAND PALETTE (mandatory in refined_prompt):\n'
+                '  coral #C6837A, peach #D8A68E, lavender #BFC9D6, '
+                'slate #565D6D, pearl #E8EBF2\n'
+                'ALLOWED GRADIENTS (pick one, vary per slide):\n'
+                '  coral top-left->pearl->off-white #F5F2EE | '
+                'peach right->pearl->off-white | '
+                'lavender top->pearl->off-white | '
+                'slate vignette edges->pearl center (radial) | '
+                'coral top->lavender bottom | peach top-left->lavender bottom-right\n'
+                'FORBIDDEN: dark/gray/black/navy/teal backgrounds. '
+                'Typography: DM Sans 700-800 charcoal #1A1A1A only.\n'
+            )
             crit_prompt = agent.ascii_safe(
-                f'You are a visual critic reviewing a TikTok slide image.\n\n'
+                f'You are a conversion-focused visual marketing director reviewing a '
+                f'TikTok slide for ClinicalHours (pre-med SaaS).\n\n'
                 f'SLIDE ROLE: {agent.ascii_safe(draft.get("role", sd_def.get("role","")))}\n'
                 f'SLIDE TYPE: {agent.ascii_safe(sd_def.get("type","slide"))}\n'
                 f'COPY TEXT: "{agent.ascii_safe(draft.get("text",""))}"\n'
                 f'SUBTEXT: "{agent.ascii_safe(draft.get("subtext",""))}"\n\n'
                 + (f'Previously completed slides:\n{prev}\n' if prev else '')
-                + 'Evaluate on 6 criteria:\n'
+                + brand_ctx + '\n'
+                + 'Think like a marketer first. Evaluate on 6 criteria:\n'
                 '1. WORD COUNT: headline visible? exceeds 6 words?\n'
                 '2. TEXT HIERARCHY: clutter? headline dominant?\n'
                 '3. SCREENSHOT: should one exist? placement correct?\n'
-                '4. MARKETING FIT: serves this slide\'s narrative role?\n'
+                '4. MARKETING FIT: does visual viscerally serve the emotional goal? '
+                'Would a pre-med stop scrolling?\n'
                 '5. VISUAL SIMILARITY: too similar to previous slides?\n'
-                '6. GOAL ACHIEVEMENT: every decision serves this slide\'s purpose?\n\n'
+                '6. COLOR BRAND FIT: gradient uses brand palette? '
+                'Dark/gray/off-brand = FAIL.\n\n'
                 'Return JSON only (no markdown):\n'
                 '{"issues":[],"similarity_flags":[],'
-                '"marketing_verdict":"...","refined_prompt":"complete standalone prompt"}'
+                '"marketing_verdict":"one sentence on pre-med conversion impact",'
+                '"refined_prompt":"complete standalone prompt — MUST start with brand gradient spec, '
+                'MUST use brand hex values, MUST include DM Sans charcoal typography, '
+                'MUST think from marketing conversion standpoint"}'
             )
 
             img_b64 = base64.b64encode(st.session_state.p1_bytes).decode('ascii')
