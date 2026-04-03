@@ -851,7 +851,50 @@ SCREENSHOT_SUGGESTIONS: Dict[str, List[str]] = {
 
 # Layout variants — controls text position and spatial composition within the unified style.
 # A new variant is randomly selected on each generation (and each retry), ensuring visual variety.
-LAYOUT_VARIANTS: List[Dict[str, str]] = [
+LAYOUT_VARIANTS_TIKTOK: List[Dict[str, str]] = [
+    {
+        'name': 'headline-top',
+        'modifier': (
+            'Headline and rule in the upper third of the canvas. '
+            'Device or open space occupies the lower two-thirds. '
+            'Generous breathing room between text and device.'
+        ),
+    },
+    {
+        'name': 'headline-bottom',
+        'modifier': (
+            'Device or open space in the upper two-thirds. '
+            'Headline, 1px rule, and subtext anchored to the lower third. '
+            'Text reads after the visual impact.'
+        ),
+    },
+    {
+        'name': 'headline-mid',
+        'modifier': (
+            'Headline and rule centered vertically on the canvas. '
+            'Equal breathing room above and below. '
+            'Balanced, editorial composition.'
+        ),
+    },
+    {
+        'name': 'text-dominant',
+        'modifier': (
+            'Large headline fills 40% of canvas height - oversized, maximum presence. '
+            'DM Sans at maximum weight. Device is small and secondary if present. '
+            'Every word readable as a 6-inch thumbnail.'
+        ),
+    },
+    {
+        'name': 'device-dominant',
+        'modifier': (
+            'Device fills 55-65% of the frame - product is the visual anchor. '
+            'Headline is compact, above the device, small but sharp. '
+            'Minimal text, maximum product visibility.'
+        ),
+    },
+]
+
+LAYOUT_VARIANTS_INSTAGRAM: List[Dict[str, str]] = [
     {
         'name': 'text-left',
         'modifier': (
@@ -893,6 +936,9 @@ LAYOUT_VARIANTS: List[Dict[str, str]] = [
         ),
     },
 ]
+
+# Keep LAYOUT_VARIANTS as alias (used by pick_layout_variant default)
+LAYOUT_VARIANTS = LAYOUT_VARIANTS_TIKTOK
 
 
 # ── API key guards ─────────────────────────────────────────────────────────────
@@ -1102,11 +1148,11 @@ def format_image_rejection_context(slide_role: str = '', limit: int = 4) -> str:
     return ascii_safe('\n'.join(lines) + '\n')
 
 
-def pick_layout_variant() -> str:
-    """Return a random layout modifier string from LAYOUT_VARIANTS."""
+def pick_layout_variant(platform: str = 'tiktok') -> str:
+    """Return a random layout modifier string for the given platform."""
     import random
-    variant = random.choice(LAYOUT_VARIANTS)
-    return ascii_safe(variant['modifier'])
+    variants = LAYOUT_VARIANTS_INSTAGRAM if platform == 'instagram' else LAYOUT_VARIANTS_TIKTOK
+    return ascii_safe(random.choice(variants)['modifier'])
 
 
 # ── Deep Research Phase ────────────────────────────────────────────────────────
@@ -1512,6 +1558,7 @@ def build_image_prompt(
     slide_number: int,
     visual_style: str,
     has_screenshot: bool,
+    platform: str = 'tiktok',
 ) -> str:
     import random as _random
     text       = ascii_safe(slide.get('text', ''))
@@ -1527,14 +1574,19 @@ def build_image_prompt(
     obj_subject = _random.choice(theme['objects']) if theme.get('objects') else ''
     style_desc = ascii_safe(VISUAL_STYLES.get(visual_style, VISUAL_STYLES['mockup']))
 
+    if platform == 'instagram':
+        canvas_spec = 'Create a landscape Instagram post image, exactly 1080 pixels wide by 810 pixels tall (4:3 ratio).'
+    else:
+        canvas_spec = 'Create a vertical TikTok slideshow image, exactly 1080 pixels wide by 1920 pixels tall (9:16 ratio).'
+
     lines = [
-        'Create a landscape Instagram post image, exactly 1080 pixels wide by 810 pixels tall (4:3 ratio).',
+        canvas_spec,
         '',
         VISUAL_STYLE_GUIDE,
         '',
         f'BACKGROUND GRADIENT: {gradient}',
         '',
-        f'LAYOUT COMPOSITION: {pick_layout_variant()}',
+        f'LAYOUT COMPOSITION: {pick_layout_variant(platform)}',
         '',
     ]
 

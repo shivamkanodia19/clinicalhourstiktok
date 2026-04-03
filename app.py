@@ -60,7 +60,7 @@ client = get_client()
 _DEFAULTS = {
     'phase': 'setup',
     'topic': '', 'framework_key': 'pain-hook', 'visual_style': 'mockup',
-    'skip_images': False, 'no_research': False, 'session_config': {},
+    'skip_images': False, 'no_research': False, 'platform': 'tiktok', 'session_config': {},
     'research_brief': None,
     'slide_order': [1, 2, 3, 4, 0],  # indices into fw['slides']
     'order_idx': 0,
@@ -146,6 +146,9 @@ with st.sidebar:
             fw_key     = st.selectbox("Framework", list(agent.FRAMEWORKS),
                                       format_func=lambda k: agent.FRAMEWORKS[k]['name'])
             vis        = st.selectbox("Visual style", list(agent.VISUAL_STYLES))
+            platform   = st.radio("Platform", ['tiktok', 'instagram'],
+                                  format_func=lambda p: 'TikTok (9:16)' if p == 'tiktok' else 'Instagram (4:3)',
+                                  horizontal=True)
             no_res     = st.checkbox("Skip research", value=False)
             skip_imgs  = st.checkbox("Copy only (no images)", value=False)
             st.markdown("**Creative brief**")
@@ -158,7 +161,7 @@ with st.sidebar:
             if go and topic.strip():
                 st.session_state.update({
                     'topic': topic.strip(), 'framework_key': fw_key,
-                    'visual_style': vis, 'skip_images': skip_imgs, 'no_research': no_res,
+                    'visual_style': vis, 'platform': platform, 'skip_images': skip_imgs, 'no_research': no_res,
                     'session_config': {'target_emotion': emotion, 'hook_type': hook_type,
                                        'cta_type': cta_type, 'audience': audience},
                     'output_folder': agent.make_output_folder(topic.strip(), fw_key),
@@ -343,7 +346,8 @@ elif st.session_state.phase == 'slide_image':
         if st.session_state.p1_bytes is None:
             if st.session_state.p1_prompt is None:
                 st.session_state.p1_prompt = agent.build_image_prompt(
-                    draft, sn, st.session_state.visual_style, bool(screenshot))
+                    draft, sn, st.session_state.visual_style, bool(screenshot),
+                    st.session_state.get('platform', 'tiktok'))
             with st.spinner("Generating..."):
                 b, m = agent.generate_image(st.session_state.p1_prompt, screenshot)
                 if not b:
@@ -477,7 +481,8 @@ elif st.session_state.phase == 'slide_image':
             if st.button("✗ Reject — regenerate", use_container_width=True):
                 agent.log_image_rejection(draft, sn, reason)
                 base = st.session_state.p1_prompt or agent.build_image_prompt(
-                    draft, sn, st.session_state.visual_style, bool(screenshot))
+                    draft, sn, st.session_state.visual_style, bool(screenshot),
+                    st.session_state.get('platform', 'tiktok'))
                 with st.spinner("Claude amplifying rejection..."):
                     try:
                         st.session_state.p1_prompt = agent.amplify_user_rejection(
