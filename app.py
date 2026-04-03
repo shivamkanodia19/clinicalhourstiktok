@@ -58,7 +58,7 @@ client = get_client()
 
 # ── Session state defaults ─────────────────────────────────────────────────────
 _DEFAULTS = {
-    'phase': 'setup',
+    'page': 'agent', 'phase': 'setup',
     'topic': '', 'framework_key': 'pain-hook', 'visual_style': 'mockup',
     'skip_images': False, 'no_research': False, 'platform': 'tiktok', 'session_config': {},
     'research_brief': None,
@@ -136,9 +136,61 @@ def full_reset():
         del st.session_state[k]
 
 
+# ── History helpers ────────────────────────────────────────────────────────────
+def load_history():
+    """Scan output/ and return list of deck dicts sorted newest first."""
+    out_dir = Path(__file__).parent / 'output'
+    decks = []
+    if not out_dir.exists():
+        return decks
+    for folder in sorted(out_dir.iterdir(), reverse=True):
+        if not folder.is_dir():
+            continue
+        slides = sorted(folder.glob('slide-*.png'))
+        if not slides:
+            continue
+        caption = ''
+        cap_file = folder / 'caption.txt'
+        if cap_file.exists():
+            caption = cap_file.read_text(encoding='utf-8', errors='ignore')
+        meta = {}
+        meta_file = folder / 'metadata.json'
+        if meta_file.exists():
+            import json
+            try:
+                meta = json.loads(meta_file.read_text(encoding='utf-8', errors='ignore'))
+            except Exception:
+                pass
+        parts = folder.name.split('_', 2)
+        date  = parts[0] if len(parts) > 0 else ''
+        fw    = parts[1] if len(parts) > 1 else ''
+        topic = parts[2].replace('-', ' ') if len(parts) > 2 else folder.name
+        decks.append({
+            'folder': folder,
+            'name': folder.name,
+            'date': date,
+            'framework': fw,
+            'topic': topic,
+            'slides': slides,
+            'caption': caption,
+            'meta': meta,
+        })
+    return decks
+
+
 # ── Sidebar ────────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("## 🎬 TikTok Agent")
+    col_a, col_h = st.columns(2)
+    with col_a:
+        if st.button("Generate", use_container_width=True,
+                     type="primary" if st.session_state.get('page') == 'agent' else "secondary"):
+            st.session_state['page'] = 'agent'; st.rerun()
+    with col_h:
+        if st.button("History", use_container_width=True,
+                     type="primary" if st.session_state.get('page') == 'history' else "secondary"):
+            st.session_state['page'] = 'history'; st.rerun()
+    st.divider()
 
     if st.session_state.phase == 'setup':
         with st.form("setup"):
@@ -183,6 +235,32 @@ with st.sidebar:
         st.divider()
         if st.button("🔄 Start over"):
             full_reset(); st.rerun()
+
+
+# ── History page ───────────────────────────────────────────────────────────────
+if st.session_state.get('page') == 'history':
+    st.title("Past Decks")
+    decks = load_history()
+    if not decks:
+        st.info("No completed decks found in the output folder yet.")
+    else:
+        st.caption(f"{len(decks)} deck(s) found")
+        for deck in decks:
+            label = f"**{deck['date']}** · {deck['framework']} · {deck['topic'][:60]}"
+            with st.expander(label, expanded=False):
+                if deck['slides']:
+                    cols = st.columns(len(deck['slides']))
+                    for i, slide_path in enumerate(deck['slides']):
+                        with cols[i]:
+                            st.image(str(slide_path), use_container_width=True)
+                            st.caption(slide_path.stem)
+                else:
+                    st.write("*No slide images found*")
+                if deck['caption']:
+                    st.divider()
+                    st.subheader("Caption")
+                    st.code(deck['caption'], language=None)
+    st.stop()
 
 
 # ── Phases ─────────────────────────────────────────────────────────────────────
