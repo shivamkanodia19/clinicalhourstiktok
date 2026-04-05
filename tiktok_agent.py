@@ -268,68 +268,65 @@ def run_render_pipeline(slides_copy: List[Dict], output_dir: Optional[Path] = No
 # ── ClinicalHours product context ─────────────────────────────────────────────
 
 PRODUCT_CONTEXT = ascii_safe("""
-ABOUT CLINICALHOURS (use this as ground truth in every prompt):
-- Free app for pre-med undergrads in the US at clinicalhours.org
-- Core features: (1) clinical volunteer hours tracker with supervisor verification,
-  (2) free clinic finder - map of real HRSA-verified volunteer opportunities near the user,
-  (3) AMCAS activity essay builder with AI writing assistance from your actual hour log
-- Founded by two Texas A&M undergrad students (authentic, relatable origin story)
-- 200+ organic users, zero marketing spend - pure word of mouth
-- Completely free, always will be
-- Target user: pre-med undergrad aged 18-24, 1-3 years out from AMCAS submission
+CLINICALHOURS - GROUND TRUTH (never contradict this):
 
-KEY NUMBERS TO USE IN SLIDES (cite these when they fit):
-- AMCAS application opens May 1st every year. Ideal first submit: June 1st.
-  Each week of delay meaningfully lowers interview invitation rates.
-- Most US medical schools: minimum 100-200 clinical hours required.
-  Top 20 schools (Hopkins, Mayo, Harvard): competitive applicants have 400-600+.
-- AMCAS Activities section: 15 slots total, 700 characters each.
-  Clinical experience is its own category - it must be verified.
-- "Most Meaningful" flag: 3 of your 15 activities get an extra 1,325 chars.
-  Clinical experience should almost always be one of your 3.
-- ClinicalHours auto-generates your 700-char AMCAS activity description
-  from your actual logged hours - no blank-page writing anxiety.
-- Verification: supervisor confirms hours via one-click email from the app.
-  Takes them under 60 seconds. Pre-med does nothing except send the request.
+WHAT IT IS:
+- Two-sided marketplace at clinicalhours.org connecting pre-meds with clinical volunteering
+- Hospitals, free clinics, community health centers
+- Target user: pre-med undergrad, 18-24, US university, 1-3 years from AMCAS
 
-COMMON PRE-MED MISTAKES (these are gold for hook slides - use them):
-- Logging nothing all year, then trying to reconstruct 200 hours from memory
-  2 weeks before the AMCAS deadline. (This is more common than people admit.)
-- Losing contact with supervisors who can no longer verify
-  (graduated, changed jobs, left the clinic, retired).
-- Confusing volunteering / physician-shadowing / research - AMCAS tracks them
-  in SEPARATE categories. Hours in the wrong category do not count.
-- Choosing non-clinical volunteering (food bank, tutoring) and discovering
-  it does not count toward clinical hours on the AMCAS.
-- Writing a vague AMCAS activity description ("I helped patients") instead of
-  a specific, quantified, supervisor-verified narrative.
-- Starting clinical hours junior year - not enough time to hit 400+ before June.
-- Not asking supervisors to verify hours before they leave the organization.
+CRITICAL: ClinicalHours does NOT verify hours. It does NOT certify or confirm hours to
+medical schools or AMCAS. Do not imply or suggest it does. Never use the word "verified"
+in relation to what ClinicalHours does with hours. Students self-log their own hours.
 
-APP FEATURES - be specific when you reference them:
-- Hours tracker: log date, location, clinic name, hours, supervisor name + email, notes.
-- Verification: one-click email to supervisor. They confirm in under 60 seconds.
-- Free clinic finder: map + list of HRSA-verified free clinics near you,
-  filterable by city and state. Real volunteer opportunities, not fabricated listings.
-- AMCAS essay builder: AI drafts your 700-char activity description
-  from your actual hour log. Supervisor-verified facts, not invented details.
-- Dashboard: total hours, category breakdown, verification status, full timeline.
+FREE TIER (core product):
+- Searchable database of clinical volunteer opportunities
+- Direct application flow - no cold emailing or phone calls
+- Self-log hours tracker (date, clinic, hours, notes - student logs it themselves)
+- Application status tracker across all applied opportunities
 
-KEY PAIN POINTS (use to drive hooks):
-- AMCAS requires verified clinical hours. Most pre-meds lose track,
-  panic, or discover problems weeks before the application deadline.
-- Finding real free-clinic volunteer opportunities is fragmented and hard.
-- Writing the AMCAS activities section from memory is stressful and imprecise.
+PREMIUM TIER ($4.99/month):
+- AI-powered AMCAS activity description writer (700-char limit per activity)
+- AAMC competency tracker - maps hours to 15 AAMC core competencies
+- Secondary essay writing tools
 
-BRAND VOICE: calm, direct, founder voice. Not corporate. Not hype.
-Like a senior pre-med giving real advice to a first-year. No em dashes.
+KEY NUMBERS:
+- AMCAS opens May 1st. Ideal first submit: June 1st. Each week late hurts.
+- Most med schools require 100-200 clinical hours minimum.
+- Top 20 schools: competitive applicants have 400-600+.
+- AMCAS: 15 activity slots, 700 chars each. Clinical = its own category.
+- 3 "Most Meaningful" activities get 1,325 extra chars. Clinical usually qualifies.
 
-APP SCREENSHOTS AVAILABLE (for real compositing into slides):
+PRE-MED MISTAKES (gold for hook slides):
+- Logging nothing all year, trying to reconstruct 200 hours 2 weeks before AMCAS
+- Losing the clinic contact who can confirm your time (graduated, changed jobs, left)
+- Confusing volunteering / shadowing / research - AMCAS counts them separately
+- Choosing non-clinical volunteering (food bank, tutoring) that won't count
+- Writing "I helped patients" instead of a specific, quantified description
+- Starting clinical hours junior year - not enough time to reach 400+ by June
+- Not getting any documentation before a supervisor leaves the organization
+
+KEY PAIN POINTS FOR HOOKS:
+- Finding legit opportunities is fragmented - Google, cold email, GroupMe spreadsheets
+- Students from less-networked backgrounds are disproportionately disadvantaged
+- Most students don't realize their informal logs won't map to AMCAS format until it's late
+- Clinical hours are required but no one teaches you how to find or document them
+
+WHAT CLINICALHOURS DOES NOT DO:
+- Does not verify or certify hours to medical schools or AMCAS
+- Does not contact clinics on the student's behalf
+- Does not guarantee placement at any opportunity
+- Does not replace AMCAS - it helps students prepare their application
+
+BRAND VOICE: direct, matter-of-fact. Lead with the problem, not the product.
+No corporate fluff. No em dashes. No: "streamline," "empower," "leverage," "unlock potential."
+One CTA per piece of content.
+
+APP SCREENSHOTS AVAILABLE:
   dashboard.png     - Hours tracking dashboard with logged hours and progress
-  opportunities.png - Map/list of free clinic volunteer opportunities nearby
-  essay.png         - AMCAS personal statement / activity essay builder
-  tracker.png       - Hour logging entry view with verification status
-  (Drop any .png into assets/screenshots/ inside this project to use it)
+  opportunities.png - Map/list of volunteer opportunities nearby
+  essay.png         - AMCAS activity description builder
+  tracker.png       - Hour logging entry view
 """)
 
 
@@ -357,7 +354,7 @@ IDENTITY MIRRORING: People act consistent with who they want to be.
   Use on hook, agitate, and audience slides.
 
 SPECIFICITY AS PROOF: Vague claims trigger skepticism. Specific numbers pass the filter.
-  "273 pre-meds" beats "hundreds." "Verified in 47 seconds" beats "verified fast."
+  "273 pre-meds" beats "hundreds." "Found in 30 seconds" beats "find it fast."
   Use wherever numbers appear.
 
 EFFORT REMOVAL: Overwhelmed people convert when effort feels minimal.
@@ -415,15 +412,14 @@ PROMOTING CLINICALHOURS (bake this into slide structure):
 - Don't introduce the product until slide 3 or 4. Earn the right to pitch.
 - Hook and agitation slides: make the viewer feel the pain before the solution appears.
 - Frame ClinicalHours as "the thing I wish I had" not "a new app you should download."
-- Founder origin story ("two Texas A&M students built this because they lived the pain")
-  adds authentic credibility - especially powerful for the social-proof framework.
-- Social proof: "200+ pre-meds already tracking" converts better than any feature list.
+- Social proof: "200+ pre-meds already using it" converts better than any feature list.
 - Deadline urgency: AMCAS opens May 1st, submit by June 1st ideally.
   Use this calendar pressure whenever the topic is application-cycle-adjacent.
-- Verification angle: "your supervisor can confirm in 60 seconds" removes the biggest
-  objection to starting (effort). Lead with ease, not features.
-- Free angle: "completely free, always" neutralizes the "just another paid app" objection.
-  Mention it on the CTA slide.
+- Accessibility angle: "no cold emails, no GroupMe spreadsheets" removes the friction
+  objection. Lead with the problem it solves, not the features.
+- Free angle: "free to use" neutralizes the "just another paid app" objection.
+  Mention it on the CTA slide. Do not claim it is "always free" - there is a paid tier.
+- Never imply ClinicalHours verifies hours or certifies anything to med schools.
 
 SCREENSHOT INTEGRATION:
 - Real app screenshots outperform illustrated mockups for credibility. Always prefer them.
@@ -517,7 +513,7 @@ FRAMEWORKS: Dict[str, Dict] = {
 SLIDE_QUESTIONS: Dict[str, List[Tuple[str, str, bool]]] = {
     'hook': [
         ("What specific pain should stop a pre-med mid-scroll?\n"
-         "  (e.g. 'realized 50 hours were unverified 2 weeks before AMCAS')",
+         "  (e.g. 'lost 50 hours of documentation 2 weeks before AMCAS')",
          'pain_detail', True),
         ("Any specific curiosity-gap angle? Press Enter and Claude will pick one.",
          'hook_angle', False),
@@ -640,7 +636,7 @@ CONTENT_PILLARS: List[str] = ['education', 'urgency', 'social-proof', 'validatio
 SEED_TOPICS: List[str] = [
     'losing track of clinical hours before AMCAS',
     'AMCAS deadline panic (May 1 opens, June 1 ideal submit)',
-    'supervisor left - can no longer verify hours',
+    'supervisor left - no record of your hours',
     'finding free clinic volunteer opportunities',
     'AMCAS activity essay writer\'s block (700 chars)',
     'starting clinical hours too late (junior year)',
@@ -1054,7 +1050,7 @@ def setup_screenshots_dir() -> None:
             '  dashboard.png     - Main hours tracking dashboard\n'
             '  opportunities.png - Volunteer opportunities list / map\n'
             '  essay.png         - AMCAS personal statement / activity editor\n'
-            '  tracker.png       - Hours logging entry with verification status\n\n'
+            '  tracker.png       - Hour logging entry view\n\n'
             'You can drop in any .png and select it by name or number during generation.\n'
             'All visual styles reserve a screenshot zone even without real screenshots.\n',
             encoding='utf-8',
