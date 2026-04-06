@@ -94,7 +94,7 @@ GENERATED_STAGING_DIR = Path(__file__).parent / 'assets' / 'generated' / 'stagin
 INDEX_FILE      = BASE_DIR / 'index.md'
 REJECTION_LOG_FILE = BASE_DIR / 'rejection_log.json'
 
-CLAUDE_MODEL   = 'claude-sonnet-4-6'
+CLAUDE_MODEL   = 'claude-haiku-4-5-20251001'
 GEMINI_PRIMARY = 'gemini-3.1-flash-image-preview'
 
 
