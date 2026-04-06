@@ -97,6 +97,12 @@ REJECTION_LOG_FILE = BASE_DIR / 'rejection_log.json'
 CLAUDE_MODEL   = 'claude-haiku-4-5-20251001'
 GEMINI_PRIMARY = 'gemini-3.1-flash-image-preview'
 
+# ── STYLE_RULES (permanent agent rules — promoted from personal rules via UI) ───
+# STYLE_RULES_START
+PERMANENT_STYLE_RULES: List[str] = [
+]
+# STYLE_RULES_END
+
 
 # ── Slide specs ────────────────────────────────────────────────────────────────
 # Each entry drives one slide in the Pillow render pipeline.
@@ -1187,6 +1193,66 @@ def format_image_rejection_context(slide_role: str = '', limit: int = 4) -> str:
     return ascii_safe('\n'.join(lines) + '\n')
 
 
+def extract_style_rule_from_rejection(
+    draft: Dict, reason: str, rejection_type: str, client
+) -> str:
+    """Ask Claude to extract one reusable style rule from a rejection."""
+    prompt = ascii_safe(
+        'A TikTok slide was rejected. Extract ONE reusable rule from this feedback.\n\n'
+        f'Type: {rejection_type}\n'
+        f'Slide text: "{draft.get("text", "")}"\n'
+        f'Visual direction: "{draft.get("visual_direction", "")}"\n'
+        f'Rejection reason: "{reason or "(none given)"}\n\n'
+        'Write a single actionable rule, max 15 words. Start with an action verb.\n'
+        'Examples:\n'
+        '  Start hooks with a number, not a question.\n'
+        '  Never use a device mockup on the hook slide.\n'
+        '  Use loss framing on agitate slides, not benefit framing.\n'
+        'Return ONLY the rule. No quotes. No prefix. No punctuation at end.'
+    )
+    response = client.messages.create(
+        model=CLAUDE_MODEL,
+        max_tokens=80,
+        messages=[{'role': 'user', 'content': prompt}],
+    )
+    return ascii_safe(response.content[0].text.strip().rstrip('.'))
+
+
+def promote_rule_to_agent(rule: str) -> str:
+    """Write rule into PERMANENT_STYLE_RULES in tiktok_agent.py and git commit.
+    Returns empty string on success, error message on failure."""
+    import subprocess
+    try:
+        agent_file = Path(__file__)
+        content    = agent_file.read_text(encoding='utf-8')
+        start_m    = '# STYLE_RULES_START'
+        end_m      = '# STYLE_RULES_END'
+        if start_m not in content or end_m not in content:
+            return 'STYLE_RULES markers not found in tiktok_agent.py'
+        start_idx  = content.index(start_m)
+        end_idx    = content.index(end_m)
+        block      = content[start_idx:end_idx]
+        rule_safe  = ascii_safe(rule).replace('"', '\\"')
+        new_line   = f'    "{rule_safe}",\n'
+        list_end   = block.rindex(']')
+        new_block  = block[:list_end] + new_line + block[list_end:]
+        agent_file.write_text(content[:start_idx] + new_block + content[end_idx:], encoding='utf-8')
+        subprocess.run(
+            ['git', 'add', agent_file.name],
+            cwd=str(agent_file.parent), capture_output=True, text=True
+        )
+        subprocess.run(
+            ['git', 'commit', '-m', f'style: promote rule -- {ascii_safe(rule)[:60]}'],
+            cwd=str(agent_file.parent), capture_output=True, text=True
+        )
+        # Update the in-memory list so the current process sees it immediately
+        if rule not in PERMANENT_STYLE_RULES:
+            PERMANENT_STYLE_RULES.append(rule)
+        return ''
+    except Exception as exc:
+        return str(exc)
+
+
 def pick_layout_variant(platform: str = 'tiktok') -> str:
     """Return a random layout modifier string for the given platform."""
     import random
@@ -1281,6 +1347,7 @@ def generate_single_slide(
     research_brief: Optional[Dict] = None,
     session_config: Optional[Dict] = None,
     is_hook_written_last: bool = False,
+    personal_rules: Optional[List[str]] = None,
 ) -> Dict:
     fw           = FRAMEWORKS[framework_key]
     slide_def    = fw['slides'][slide_index]
@@ -1371,11 +1438,24 @@ def generate_single_slide(
         if is_first else ''
     )
 
+    # Build style rules context (Tier 2 permanent + Tier 1 personal from localStorage)
+    all_rules = list(PERMANENT_STYLE_RULES)
+    if personal_rules:
+        all_rules.extend(personal_rules)
+    style_rules_ctx = ''
+    if all_rules:
+        rules_lines = '\n'.join(f'  - {r}' for r in all_rules[:20])
+        style_rules_ctx = ascii_safe(
+            'YOUR STYLE RULES (always follow — learned from past approvals and rejections):\n'
+            + rules_lines + '\n\n'
+        )
+
     prompt = ascii_safe(
         'You are writing ONE slide of a TikTok carousel for ClinicalHours.\n\n'
         + PRODUCT_CONTEXT + '\n'
         + RESEARCH_CONTEXT + '\n'
         + brief_ctx
+        + style_rules_ctx
         + format_copy_rejection_context()
         + MARKETING_PSYCHOLOGY + '\n'
         + CONCISENESS_RULES + '\n'
@@ -1603,6 +1683,7 @@ def build_image_prompt(
     visual_style: str,
     has_screenshot: bool,
     platform: str = 'tiktok',
+    personal_rules: Optional[List[str]] = None,
 ) -> str:
     import random as _random
     text       = ascii_safe(slide.get('text', ''))
@@ -1696,6 +1777,14 @@ def build_image_prompt(
     rejection_ctx = ascii_safe(format_image_rejection_context(role))
     if rejection_ctx.strip():
         lines += ['', rejection_ctx]
+
+    # Inject Tier 1 personal + Tier 2 permanent image style rules
+    img_rules = list(PERMANENT_STYLE_RULES)
+    if personal_rules:
+        img_rules.extend(personal_rules)
+    if img_rules:
+        rule_lines = '\n'.join(f'  - {ascii_safe(r)}' for r in img_rules[:20])
+        lines += ['', 'YOUR STYLE RULES (always follow):', rule_lines]
 
     lines += [
         '',

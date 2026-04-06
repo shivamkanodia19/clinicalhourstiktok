@@ -5,11 +5,18 @@ Run with: streamlit run app.py
 """
 
 import base64
+import json
 import os
 import sys
 from pathlib import Path
 
 import streamlit as st
+
+try:
+    from streamlit_javascript import st_javascript as _st_js
+    _HAS_ST_JS = True
+except ImportError:
+    _HAS_ST_JS = False
 
 sys.path.insert(0, str(Path(__file__).parent))
 
@@ -278,9 +285,11 @@ hr {
 # ── Password gate ───────────────────────────────────────────────────────────────
 def check_password():
     try:
-        correct = st.secrets.get("APP_PASSWORD", "shivam123")
+        correct = st.secrets.get("APP_PASSWORD") or os.environ.get("APP_PASSWORD", "")
     except Exception:
-        correct = "shivam123"
+        correct = os.environ.get("APP_PASSWORD", "")
+    if not correct:
+        return True  # No password configured — open access
     if st.session_state.get("authenticated"):
         return True
     with st.form("login"):
@@ -331,6 +340,61 @@ _DEFAULTS = {
 for k, v in _DEFAULTS.items():
     if k not in st.session_state:
         st.session_state[k] = v
+
+# ── Tier 1 style rules — localStorage + file fallback ─────────────────────────
+# Primary:  browser localStorage via streamlit-javascript (private per-browser)
+# Fallback: style_rules_personal.json in project dir (used when package not installed)
+# Session-state is the source of truth after initial load; backends are write-through.
+_LS_KEY           = 'clinicalhours_style_rules'
+_RULES_FILE       = Path(__file__).parent / 'style_rules_personal.json'
+
+def _file_load_rules() -> list:
+    try:
+        if _RULES_FILE.exists():
+            return json.loads(_RULES_FILE.read_text(encoding='utf-8'))
+    except Exception:
+        pass
+    return []
+
+def _file_save_rules(rules: list) -> None:
+    try:
+        _RULES_FILE.write_text(json.dumps(rules, indent=2), encoding='utf-8')
+    except Exception:
+        pass
+
+if 'personal_rules' not in st.session_state:
+    st.session_state.personal_rules = []
+if '_ls_loaded' not in st.session_state:
+    st.session_state._ls_loaded = False
+
+# File fallback: load immediately on first run (synchronous, no async needed)
+if not _HAS_ST_JS and not st.session_state._ls_loaded:
+    st.session_state.personal_rules = _file_load_rules()
+    st.session_state._ls_loaded = True
+
+# localStorage: render read component once; returns 0 first call, value on next rerun
+if _HAS_ST_JS and not st.session_state._ls_loaded:
+    _rules_raw = _st_js(f"localStorage.getItem('{_LS_KEY}') || '[]'", key='_ls_read_rules')
+    if isinstance(_rules_raw, str) and _rules_raw:
+        try:
+            _loaded = json.loads(_rules_raw)
+            if isinstance(_loaded, list):
+                st.session_state.personal_rules = _loaded
+                st.session_state._ls_loaded = True
+        except Exception:
+            st.session_state._ls_loaded = True
+
+
+def _save_personal_rules(rules: list) -> None:
+    """Write-through: update session_state, localStorage (if available), and file fallback."""
+    st.session_state.personal_rules = rules
+    st.session_state._ls_loaded = True
+    st.session_state['_ls_write_ctr'] = st.session_state.get('_ls_write_ctr', 0) + 1
+    if _HAS_ST_JS:
+        _st_js(f"localStorage.setItem('{_LS_KEY}', {json.dumps(json.dumps(rules))})",
+               key=f'_ls_write_{st.session_state["_ls_write_ctr"]}')
+    else:
+        _file_save_rules(rules)
 
 
 # ── UI helpers ─────────────────────────────────────────────────────────────────
@@ -644,6 +708,41 @@ with st.sidebar:
         if st.button("🔄 Start over"):
             full_reset(); st.rerun()
 
+    # ── Style memory panel (always shown) ──────────────────────────────────────
+    _rules = st.session_state.get('personal_rules', [])
+    if _rules:
+        st.divider()
+        st.markdown('<div style="font-size:10px;font-weight:700;text-transform:uppercase;'
+                    'letter-spacing:.12em;color:#C6837A;margin-bottom:8px;">Style Memory</div>',
+                    unsafe_allow_html=True)
+        for _i, _rule in enumerate(_rules):
+            st.markdown(
+                f'<div style="font-size:12px;color:#E8EBF2;padding:5px 0 2px;'
+                f'border-bottom:1px solid rgba(255,255,255,0.07);">{_rule}</div>',
+                unsafe_allow_html=True,
+            )
+            _pc, _dc = st.columns([3, 1])
+            with _pc:
+                if st.button("↑ Agent", key=f"promote_{_i}", use_container_width=True,
+                             help="Bake this rule into tiktok_agent.py for everyone"):
+                    _err = agent.promote_rule_to_agent(_rule)
+                    if _err:
+                        st.session_state['_promote_msg'] = ('error', _err)
+                    else:
+                        st.session_state['_promote_msg'] = ('ok', _rule)
+                    st.rerun()
+            if st.session_state.get('_promote_msg') and st.session_state['_promote_msg'][1] == _rule:
+                _kind, _msg = st.session_state.pop('_promote_msg')
+                if _kind == 'ok':
+                    st.success(f"Promoted to agent: \"{_msg[:40]}\"")
+                else:
+                    st.error(_msg)
+            with _dc:
+                if st.button("✕", key=f"del_rule_{_i}", use_container_width=True):
+                    _new = [r for j, r in enumerate(_rules) if j != _i]
+                    _save_personal_rules(_new)
+                    st.rerun()
+
 
 # ── History page ───────────────────────────────────────────────────────────────
 if st.session_state.get('page') == 'history':
@@ -837,6 +936,7 @@ elif st.session_state.phase == 'slide_copy':
                     sidx, answers, st.session_state.slides_written, client,
                     st.session_state.research_brief, st.session_state.session_config,
                     is_hook_written_last=True,
+                    personal_rules=st.session_state.get('personal_rules', []),
                 )
             except Exception as e:
                 st.error(f"Copy generation failed: {e}")
@@ -875,6 +975,17 @@ elif st.session_state.phase == 'slide_copy':
     with cr:
         if st.button("Rewrite", use_container_width=True):
             agent.log_copy_rejection(draft, st.session_state.topic, extra)
+            with st.spinner("Extracting style rule..."):
+                try:
+                    _rule = agent.extract_style_rule_from_rejection(draft, extra, 'copy', client)
+                    _updated = st.session_state.personal_rules + [_rule]
+                    _seen = set(); _deduped = []
+                    for r in _updated:
+                        if r not in _seen:
+                            _seen.add(r); _deduped.append(r)
+                    _save_personal_rules(_deduped[-20:])
+                except Exception:
+                    pass
             st.session_state.extra_dir = extra
             st.session_state.draft = None
             st.rerun()
@@ -967,7 +1078,8 @@ elif st.session_state.phase == 'slide_image':
             if st.session_state.p1_prompt is None:
                 st.session_state.p1_prompt = agent.build_image_prompt(
                     draft, sn, st.session_state.visual_style, bool(screenshot),
-                    st.session_state.get('platform', 'tiktok'))
+                    st.session_state.get('platform', 'tiktok'),
+                    st.session_state.get('personal_rules', []))
             with st.spinner("Generating..."):
                 b, m = agent.generate_image(st.session_state.p1_prompt, screenshot)
                 if not b:
@@ -1101,9 +1213,20 @@ elif st.session_state.phase == 'slide_image':
                                    placeholder="e.g. background too dark, text too small")
             if st.button("✗ Reject — regenerate", use_container_width=True):
                 agent.log_image_rejection(draft, sn, reason)
+                try:
+                    _img_rule = agent.extract_style_rule_from_rejection(draft, reason, 'image', client)
+                    _upd = st.session_state.personal_rules + [_img_rule]
+                    _seen2 = set(); _deduped2 = []
+                    for r in _upd:
+                        if r not in _seen2:
+                            _seen2.add(r); _deduped2.append(r)
+                    _save_personal_rules(_deduped2[-20:])
+                except Exception:
+                    pass
                 base = st.session_state.p1_prompt or agent.build_image_prompt(
                     draft, sn, st.session_state.visual_style, bool(screenshot),
-                    st.session_state.get('platform', 'tiktok'))
+                    st.session_state.get('platform', 'tiktok'),
+                    st.session_state.get('personal_rules', []))
                 with st.spinner("Claude amplifying rejection..."):
                     try:
                         st.session_state.p1_prompt = agent.amplify_user_rejection(

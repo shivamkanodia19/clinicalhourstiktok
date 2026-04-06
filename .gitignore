@@ -19,7 +19,14 @@ env/
 # Generated output (local only)
 output/
 renders/
+rejection_log.json
 rejection_log.jsonl
+
+# Personal style rules (Tier 1 memory — local per-user, not shared)
+style_rules_personal.json
+
+# Design scratch files
+setup-options.html
 
 # OS
 .DS_Store
